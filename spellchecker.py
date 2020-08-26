@@ -10,7 +10,7 @@ import csv
 import enchant
 
 # PROGRAM VARS
-PROG_NAME = __file__  # main.py
+PROG_NAME = __file__  # spellchecker.py
 PROG_VERS = '1.0'  # none production version
 
 # GLOBALS
