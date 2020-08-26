@@ -11,7 +11,7 @@ import enchant
 
 # PROGRAM VARS
 PROG_NAME = __file__  # main.py
-PROG_VERS = '0.1'  # none production version
+PROG_VERS = '1.0'  # none production version
 
 # GLOBALS
 _basedir = os.path.abspath(os.path.dirname(__file__))  # get relative directory
