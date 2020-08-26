@@ -8,6 +8,7 @@ import sys
 import os
 import csv
 import enchant
+from datetime import datetime
 
 # PROGRAM VARS
 PROG_NAME = __file__  # spellchecker.py
@@ -17,13 +18,20 @@ PROG_VERS = '1.0'  # none production version
 _basedir = os.path.abspath(os.path.dirname(__file__))  # get relative directory
 _datafolder = 'data'  # data directory
 _datafile = 'example_data1.csv'  # data file
+_correctfile = 'correct.csv'
 
 
 # MAIN FUNCTION
 def main():
     data = read_file()  # csv reader function
+    data1, data2, data3, data4 = list_divider(data, 4)
+    start = datetime.now()
     corrected = spellcheck(data)  # spell checking function
+    end = datetime.now()
+    print(corrected)
     write_csv(corrected)
+
+    print(end - start)
 
 
 # ------------------- CSV HANDLING --------------------------
@@ -54,7 +62,7 @@ def write_csv(corrected):
     with open(os.path.join(_basedir,
                            _datafolder,
                            _correctfile),
-              'w+') as writehandle:
+              'w+', newline='') as writehandle:
         writer = csv.writer(writehandle)
         for row in corrected:
             writer.writerow(row)
@@ -95,6 +103,16 @@ def spellcheck(data):
     return corrected
 
 
+def list_divider(_list: list, num: int):
+
+    listlen = len(_list)
+
+    div = listlen / num
+    return(_list[:int(div)],
+           _list[int(div):int(div * 2)],
+           _list[int(div * 2):int(div * 3)],
+           _list[int(div * 3):])
+
 if __name__ == '__main__':
 
     usage ="""
@@ -114,7 +132,6 @@ if __name__ == '__main__':
         try:
             _correctfile = sys.argv[2]
         except IndexError:
-            _correctfile = 'correct.csv'
             print("No output file specified outputting to: {}".format(_correctfile))
 
     main()  # run main function
