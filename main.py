@@ -22,7 +22,8 @@ _exampledata = 'example_data1.csv'  # data file
 # MAIN FUNCTION
 def main():
     data = read_file()  # csv reader function
-    spellcheck(data)  # spell checking function
+    corrected = spellcheck(data)  # spell checking function
+    write_csv(corrected)
 
 
 # ------------------- CSV HANDLING --------------------------
@@ -44,24 +45,49 @@ def read_file():
     return data
 
 
+def write_csv(corrected):
+    with open(os.path.join(_basedir,
+                           _datafolder,
+                           'correct.csv'),
+              'w+') as writehandle:
+        writer = csv.writer(writehandle)
+        for row in corrected:
+            writer.writerow(row)
+
+
 # ------------------- SPELL CHECKING ------------------------
 # Check spelling of each work in any given list
-# TODO: work on better word splitting algorithm
 def spellcheck(data):
+    corrected = []
     spell = enchant.Dict('en-US')
 
     for i in data:  # for row in data
+        if len(corrected) == 0:  # ignore header for correction
+            corrected.append(i)
+            continue
+        row = []
         for j in i:  # for column in row
+            column = []
             j = j.split()  # split string into list of words
             if len(j) > 1:  # if more than one word
                 for k in j:  # for word in sentence
                     # this needs to be better had to add len check
                     # because non alpha chars mess up first len check
                     if not spell.check(k) and len(k) > 1:
-                        print(spell.suggest(k))
+                        column.append(spell.suggest(k)[0])
+                        continue
+                    else:
+                        column.append(k)
+                row.append(' '.join(column))
             else:  # only one word so no loop needed
                 if not spell.check(j[0]):
-                    print(spell.suggest(j[0]))
+                    row.append(spell.suggest(j[0])[0])
+                    continue
+                else:
+                    row.append(j[0])
+        corrected.append(row)
+
+    return corrected
 
 
 if __name__ == '__main__':
