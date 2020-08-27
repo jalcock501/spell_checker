@@ -9,6 +9,7 @@ import os
 import csv
 import enchant
 from datetime import datetime
+import multiprocessing
 
 # PROGRAM VARS
 PROG_NAME = __file__  # spellchecker.py
@@ -23,20 +24,33 @@ _correctfile = 'correct.csv'
 
 # MAIN FUNCTION
 def main():
-    data = read_file()  # csv reader function
-    data1, data2, data3, data4 = list_divider(data, 4)
-    start = datetime.now()
-    corrected = spellcheck(data)  # spell checking function
-    end = datetime.now()
-    print(corrected)
-    write_csv(corrected)
 
-    print(end - start)
+    with multiprocessing.Manager() as manager:  # use manager for concurrent list
+        corrected = manager.list()  # list object from manager class
+        processes = []  # empty list for processes
+        processors = multiprocessing.cpu_count()  # processor count
+
+        data = read_file()  # csv reader function
+        chopped_list = list_divider(data, processors)  # divide list based on cpu count
+        start = datetime.now()  # for timing speed
+        for n in range(0, processors):
+            # create a process for each available processor
+            p = multiprocessing.Process(target=spellcheck, args=(chopped_list[n], corrected,))
+            processes.append(p)
+            p.start()
+
+        # close processes once done
+        for process in processes:
+            p.join()
+
+        end = datetime.now()
+        write_csv(corrected)  # write to file
+
+        print(end - start)
 
 
 # ------------------- CSV HANDLING --------------------------
 # Read csv file and return list of data
-# TODO: turn this into a generator
 def read_file():
     data = []
 
@@ -70,12 +84,11 @@ def write_csv(corrected):
 
 # ------------------- SPELL CHECKING ------------------------
 # Check spelling of each work in any given list
-def spellcheck(data):
-    corrected = []
+def spellcheck(data, corrected):
     spell = enchant.Dict('en-US')
 
     for i in data:  # for row in data
-        if len(corrected) == 0:  # ignore header for correction
+        if len(corrected) == 0:
             corrected.append(i)
             continue
         row = []  # used to recreate row for write
@@ -100,18 +113,22 @@ def spellcheck(data):
                     row.append(j[0])
         corrected.append(row)
 
-    return corrected
+
+# Divide list based on CPU count
+def list_divider(_list: list, n: int):
+
+    avg = len(_list) / float(n)
+    out = []
+
+    last = 0.0
+
+    while last < len(_list):
+        out.append(_list[int(last): int(last + avg)])
+        last += avg
+
+    return out
 
 
-def list_divider(_list: list, num: int):
-
-    listlen = len(_list)
-
-    div = listlen / num
-    return(_list[:int(div)],
-           _list[int(div):int(div * 2)],
-           _list[int(div * 2):int(div * 3)],
-           _list[int(div * 3):])
 
 if __name__ == '__main__':
 
